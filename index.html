@@ -1,0 +1,1332 @@
+<!doctype html>
+<html ng-app="templateApp">
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script data-require="angular.js@1.2.x" src="https://code.angularjs.org/1.2.21/angular.js" data-semver="1.2.21"></script>
+        <script data-require="ui-utils@*" data-semver="0.1.1" src="http://angular-ui.github.io/ui-utils/dist/ui-utils.js"></script>
+        <script src="template.js"></script> 
+        <title>Template WHS Setup SQL generator 0.3</title>
+    </head>
+    <body>
+        <section ng-controller="PanelController as panel" style="position: absolute; top: 25px;"> <!--  -->
+            <div id='cssmenu'>
+                <ul>
+                    <li ng-class='{active: panel.isSelected(1)}'>
+                        <a href="" ng-click="panel.selectTab(1)">WHS Profile Summary</a>
+                    </li>
+                    <li ng-class='{active: panel.isSelected(2)}'>
+                        <a href="" ng-click="panel.selectTab(2)">WHS Location Mgmt</a>
+                    </li>
+                    <li ng-class='{active: panel.isSelected(3)}'>
+                        <a href="" ng-click="panel.selectTab(3)">Label Printers</a>
+                    </li>
+                    <li ng-class='{active: panel.isSelected(4)}'>
+                        <a href="" ng-click="panel.selectTab(4)">Users</a>
+                    </li>
+                    <li ng-class='{active: panel.isSelected(5)}' class='last'>
+                        <a href="" ng-click="panel.selectTab(5)">TDK</a>
+                    </li>                
+                </ul>
+            </div>
+            <section ng-controller="DataController as data">
+                <div style="position: absolute; top: -25px;">
+                    <button ng-click="validate()">Validate</button>
+                    <button ng-click="export()">Export</button>
+                    <button ng-click="import()">Import</button>
+                    <button ng-click="sql()">SQL</button> 
+                </div>
+
+                <span id="validate" class="output">
+                    <a href="" ng-click="close('validate')">[x]</a>
+                    Please correct following mistakes on * tabs:
+                    <textarea ng-model="output" class="outputtextarea"></textarea>
+                </span>               
+
+                <span id="export" class="output">
+                    <a href="" ng-click="close('export')">[x]</a>
+                    To save as file click: <button ng-click="savefile()" style="">Save</button>
+                    <textarea ng-model="output" class="outputtextarea"></textarea>
+                </span>               
+
+                <span id="import" class="output">
+                    <a href="" ng-click="close('import')">[x]</a>
+                    Paste warehouse setup in JSON format (after Export) and click: <button ng-click="load()" style="">Load</button>
+                    <textarea ng-model="output" class="outputtextarea"></textarea>
+                </span>
+            
+                <span id="sql" class="output">
+                    <a href="" ng-click="close('sql')">[x]</a>
+                    Click into text area and press CTRL-A to select all
+                    <textarea ng-model="output" class="outputtextarea"></textarea>
+                </span>               
+             
+                <div ng-show="panel.isSelected(1)">
+                    <h4>WHS Profile Summary</h4>
+                   
+                    <form>
+                        <table border="1">
+                          <col style="vertical-align:top; width: 200px;">
+                          <col style="vertical-align:top; width: 200px;">
+                          <col style="vertical-align:top; width: 200px;">
+                          <col style="vertical-align:top; width: 600px;">
+                          <tr>
+                            <td style="width: 200px;">Description</td>
+                            <td>Value constrains</td>
+                            <td>NEW WHS DATA</td>
+                            <td>Informations</td>
+                          </tr>
+                          <tr>
+                            <td><b>Warehouse country</b></td>
+                            <td></td>
+                            <td><input id="whs_country" placeholder="NZ" ng-model="whs.whs_country" /></td>
+                            <td rowspan="100" id="info"><script>$("#info").load("whs_profile_summary_info.html");</script></td>
+                          </tr>
+                          <tr>
+                            <td><b>Warehouse city</b></td>
+                            <td></td>
+                            <td><input id="whs_city" placeholder="Auckland" ng-model="whs.whs_city"/></td>
+                          </tr>
+                          <tr id="whs_code_tr">
+                            <td><b>Warehouse code</b></td>
+                            <td>length 5</td>
+                            <td ng-class="{mandatory: 1}"><input id="whs_code" placeholder="AKL01" maxlength="5" ng-model="whs.whs_code" capitalize /> </td>
+                          </tr>
+                          <tr id="length_unit_tr">
+                            <td><b>Length unit</b><br /> - will be used in FSI application</td>
+                            <td>valid unit only</td>
+                            <td ng-class="{predefined: 1}"><select id="length_unit" ng-model="whs.length_unit">
+                                  <option value="-">-- choose --</option> 
+                                  <option value="INH">Inch</option>
+                                  <option value="MTR">Meter</option>
+                                  <option value="CMT">Centimeter</option>
+                                  <option value="DMT">Decimeter</option>
+                                  <option value="KMT">Kilometer</option>
+                                  <option value="SMI">Mile</option>
+                            </select></td>
+                          </tr>
+                          <tr id="weight_unit_tr">
+                            <td><b>Weight unit</b><br /> - will be used in FSI application</td>
+                            <td>valid unit only</td>
+                            <td ng-class="{predefined: 1}"><select id="weight_unit" ng-model="whs.weight_unit">
+                                  <option value="-">-- choose --</option>
+                                  <option value="TNE">Tonne</option>
+                                  <option value="KGM">Kilogram</option>
+                                  <option value="GRM">Gram</option>
+                                  <option value="LBS">Pounds</option>
+                            </select></td>
+                          </tr>
+                          <tr id="volume_unit_tr">
+                            <td><b>Volume unit</b><br /> - will be used in FSI application</td>
+                            <td>valid unit only</td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.volume_unit">
+                                  <option value="-">-- choose --</option>
+                                  <option value="CMQ">Cubiccentimeter</option>
+                                  <option value="HLT">Hectoliters</option>
+                                  <option value="LTR">Liter</option>
+                                  <option value="MTQ">Cubicmeter</option>
+                                  <option value="MLT">Mililiter</option>
+                                  <option value="MMQ">Cubicmilimeter</option>                             
+                            </select></td>
+                          </tr>
+                          <tr id="def_copies_tr">
+                            <td><b>Default number of copies</b> of OHN labels</td>
+                            <td>number</td>
+                            <td ng-class="{mandatory: 1}"><input id="def_copies" min="0" ng-model="whs.def_copies"/></td>
+                          </tr>
+                          <tr id="init_number_tr">
+                            <td><b>Initial number</b> of dimension lines in Receive Onhand screen</td>
+                            <td>number</td>
+                            <td ng-class="{mandatory: 1}"><input id="init_number" min="0" ng-model="whs.init_number"/></td>
+                          </tr>
+                          <tr id="def_rec_loc_tr">
+                            <td><b>Default receiving location</b></td>
+                            <td>one of warehouse location</td>
+                            <td ng-class="{predefined: 1}"><select id="def_rec_loc" ng-model="whs.def_rec_loc" ng-options="value.loc_code as value.loc_code for value in whs_loc_array">
+                                <option value="">-- no default location --</option></select></td>
+                          </tr>
+                          <tr id="def_unl_loc_tr">
+                            <td><b>Default unloading location</b></td>
+                            <td>one of warehouse location</td>
+                            <td ng-class="{predefined: 1}"><select id="def_unl_loc" ng-model="whs.def_unl_loc" ng-options="value.loc_code as value.loc_code for value in whs_loc_array">
+                                <option value="">-- no default location --</option></select></td>
+                          </tr>
+                          <tr id="whs_timezone_tr">
+                            <td><b>Warehouse timezone</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="whs_timezone" placeholder="ETC/GMT+12" ng-model="whs.whs_timezone">
+                                    <option value="-">-- choose --</option>
+                                    <option value="Africa/Abidjan">Africa/Abidjan</option>
+                                    <option value="Africa/Accra">Africa/Accra</option>
+                                    <option value="Africa/Addis_Ababa">Africa/Addis_Ababa</option>
+                                    <option value="Africa/Algiers">Africa/Algiers</option>
+                                    <option value="Africa/Asmara">Africa/Asmara</option>
+                                    <option value="Africa/Asmera">Africa/Asmera</option>
+                                    <option value="Africa/Bamako">Africa/Bamako</option>
+                                    <option value="Africa/Bangui">Africa/Bangui</option>
+                                    <option value="Africa/Banjul">Africa/Banjul</option>
+                                    <option value="Africa/Bissau">Africa/Bissau</option>
+                                    <option value="Africa/Blantyre">Africa/Blantyre</option>
+                                    <option value="Africa/Brazzaville">Africa/Brazzaville</option>
+                                    <option value="Africa/Bujumbura">Africa/Bujumbura</option>
+                                    <option value="Africa/Cairo">Africa/Cairo</option>
+                                    <option value="Africa/Casablanca">Africa/Casablanca</option>
+                                    <option value="Africa/Ceuta">Africa/Ceuta</option>
+                                    <option value="Africa/Conakry">Africa/Conakry</option>
+                                    <option value="Africa/Dakar">Africa/Dakar</option>
+                                    <option value="Africa/Dar_es_Salaam">Africa/Dar_es_Salaam</option>
+                                    <option value="Africa/Djibouti">Africa/Djibouti</option>
+                                    <option value="Africa/Douala">Africa/Douala</option>
+                                    <option value="Africa/El_Aaiun">Africa/El_Aaiun</option>
+                                    <option value="Africa/Freetown">Africa/Freetown</option>
+                                    <option value="Africa/Gaborone">Africa/Gaborone</option>
+                                    <option value="Africa/Harare">Africa/Harare</option>
+                                    <option value="Africa/Johannesburg">Africa/Johannesburg</option>
+                                    <option value="Africa/Juba">Africa/Juba</option>
+                                    <option value="Africa/Kampala">Africa/Kampala</option>
+                                    <option value="Africa/Khartoum">Africa/Khartoum</option>
+                                    <option value="Africa/Kigali">Africa/Kigali</option>
+                                    <option value="Africa/Kinshasa">Africa/Kinshasa</option>
+                                    <option value="Africa/Lagos">Africa/Lagos</option>
+                                    <option value="Africa/Libreville">Africa/Libreville</option>
+                                    <option value="Africa/Lome">Africa/Lome</option>
+                                    <option value="Africa/Luanda">Africa/Luanda</option>
+                                    <option value="Africa/Lubumbashi">Africa/Lubumbashi</option>
+                                    <option value="Africa/Lusaka">Africa/Lusaka</option>
+                                    <option value="Africa/Malabo">Africa/Malabo</option>
+                                    <option value="Africa/Maputo">Africa/Maputo</option>
+                                    <option value="Africa/Maseru">Africa/Maseru</option>
+                                    <option value="Africa/Mbabane">Africa/Mbabane</option>
+                                    <option value="Africa/Mogadishu">Africa/Mogadishu</option>
+                                    <option value="Africa/Monrovia">Africa/Monrovia</option>
+                                    <option value="Africa/Nairobi">Africa/Nairobi</option>
+                                    <option value="Africa/Ndjamena">Africa/Ndjamena</option>
+                                    <option value="Africa/Niamey">Africa/Niamey</option>
+                                    <option value="Africa/Nouakchott">Africa/Nouakchott</option>
+                                    <option value="Africa/Ouagadougou">Africa/Ouagadougou</option>
+                                    <option value="Africa/Porto-Novo">Africa/Porto-Novo</option>
+                                    <option value="Africa/Sao_Tome">Africa/Sao_Tome</option>
+                                    <option value="Africa/Timbuktu">Africa/Timbuktu</option>
+                                    <option value="Africa/Tripoli">Africa/Tripoli</option>
+                                    <option value="Africa/Tunis">Africa/Tunis</option>
+                                    <option value="Africa/Windhoek">Africa/Windhoek</option>
+                                    <option value="AKST9AKDT">AKST9AKDT</option>
+                                    <option value="America/Adak">America/Adak</option>
+                                    <option value="America/Anchorage">America/Anchorage</option>
+                                    <option value="America/Anguilla">America/Anguilla</option>
+                                    <option value="America/Antigua">America/Antigua</option>
+                                    <option value="America/Araguaina">America/Araguaina</option>
+                                    <option value="America/Argentina/Buenos_Aires">America/Argentina/Buenos_Aires</option>
+                                    <option value="America/Argentina/Catamarca">America/Argentina/Catamarca</option>
+                                    <option value="America/Argentina/ComodRivadavia">America/Argentina/ComodRivadavia</option>
+                                    <option value="America/Argentina/Cordoba">America/Argentina/Cordoba</option>
+                                    <option value="America/Argentina/Jujuy">America/Argentina/Jujuy</option>
+                                    <option value="America/Argentina/La_Rioja">America/Argentina/La_Rioja</option>
+                                    <option value="America/Argentina/Mendoza">America/Argentina/Mendoza</option>
+                                    <option value="America/Argentina/Rio_Gallegos">America/Argentina/Rio_Gallegos</option>
+                                    <option value="America/Argentina/Salta">America/Argentina/Salta</option>
+                                    <option value="America/Argentina/San_Juan">America/Argentina/San_Juan</option>
+                                    <option value="America/Argentina/San_Luis">America/Argentina/San_Luis</option>
+                                    <option value="America/Argentina/Tucuman">America/Argentina/Tucuman</option>
+                                    <option value="America/Argentina/Ushuaia">America/Argentina/Ushuaia</option>
+                                    <option value="America/Aruba">America/Aruba</option>
+                                    <option value="America/Asuncion">America/Asuncion</option>
+                                    <option value="America/Atikokan">America/Atikokan</option>
+                                    <option value="America/Atka">America/Atka</option>
+                                    <option value="America/Bahia">America/Bahia</option>
+                                    <option value="America/Bahia_Banderas">America/Bahia_Banderas</option>
+                                    <option value="America/Barbados">America/Barbados</option>
+                                    <option value="America/Belem">America/Belem</option>
+                                    <option value="America/Belize">America/Belize</option>
+                                    <option value="America/Blanc-Sablon">America/Blanc-Sablon</option>
+                                    <option value="America/Boa_Vista">America/Boa_Vista</option>
+                                    <option value="America/Bogota">America/Bogota</option>
+                                    <option value="America/Boise">America/Boise</option>
+                                    <option value="America/Buenos_Aires">America/Buenos_Aires</option>
+                                    <option value="America/Cambridge_Bay">America/Cambridge_Bay</option>
+                                    <option value="America/Campo_Grande">America/Campo_Grande</option>
+                                    <option value="America/Cancun">America/Cancun</option>
+                                    <option value="America/Caracas">America/Caracas</option>
+                                    <option value="America/Catamarca">America/Catamarca</option>
+                                    <option value="America/Cayenne">America/Cayenne</option>
+                                    <option value="America/Cayman">America/Cayman</option>
+                                    <option value="America/Chicago">America/Chicago</option>
+                                    <option value="America/Chihuahua">America/Chihuahua</option>
+                                    <option value="America/Coral_Harbour">America/Coral_Harbour</option>
+                                    <option value="America/Cordoba">America/Cordoba</option>
+                                    <option value="America/Costa_Rica">America/Costa_Rica</option>
+                                    <option value="America/Creston">America/Creston</option>
+                                    <option value="America/Cuiaba">America/Cuiaba</option>
+                                    <option value="America/Curacao">America/Curacao</option>
+                                    <option value="America/Danmarkshavn">America/Danmarkshavn</option>
+                                    <option value="America/Dawson">America/Dawson</option>
+                                    <option value="America/Dawson_Creek">America/Dawson_Creek</option>
+                                    <option value="America/Denver">America/Denver</option>
+                                    <option value="America/Detroit">America/Detroit</option>
+                                    <option value="America/Dominica">America/Dominica</option>
+                                    <option value="America/Edmonton">America/Edmonton</option>
+                                    <option value="America/Eirunepe">America/Eirunepe</option>
+                                    <option value="America/El_Salvador">America/El_Salvador</option>
+                                    <option value="America/Ensenada">America/Ensenada</option>
+                                    <option value="America/Fort_Wayne">America/Fort_Wayne</option>
+                                    <option value="America/Fortaleza">America/Fortaleza</option>
+                                    <option value="America/Glace_Bay">America/Glace_Bay</option>
+                                    <option value="America/Godthab">America/Godthab</option>
+                                    <option value="America/Goose_Bay">America/Goose_Bay</option>
+                                    <option value="America/Grand_Turk">America/Grand_Turk</option>
+                                    <option value="America/Grenada">America/Grenada</option>
+                                    <option value="America/Guadeloupe">America/Guadeloupe</option>
+                                    <option value="America/Guatemala">America/Guatemala</option>
+                                    <option value="America/Guayaquil">America/Guayaquil</option>
+                                    <option value="America/Guyana">America/Guyana</option>
+                                    <option value="America/Halifax">America/Halifax</option>
+                                    <option value="America/Havana">America/Havana</option>
+                                    <option value="America/Hermosillo">America/Hermosillo</option>
+                                    <option value="America/Indiana/Indianapolis">America/Indiana/Indianapolis</option>
+                                    <option value="America/Indiana/Knox">America/Indiana/Knox</option>
+                                    <option value="America/Indiana/Marengo">America/Indiana/Marengo</option>
+                                    <option value="America/Indiana/Petersburg">America/Indiana/Petersburg</option>
+                                    <option value="America/Indiana/Tell_City">America/Indiana/Tell_City</option>
+                                    <option value="America/Indiana/Vevay">America/Indiana/Vevay</option>
+                                    <option value="America/Indiana/Vincennes">America/Indiana/Vincennes</option>
+                                    <option value="America/Indiana/Winamac">America/Indiana/Winamac</option>
+                                    <option value="America/Indianapolis">America/Indianapolis</option>
+                                    <option value="America/Inuvik">America/Inuvik</option>
+                                    <option value="America/Iqaluit">America/Iqaluit</option>
+                                    <option value="America/Jamaica">America/Jamaica</option>
+                                    <option value="America/Jujuy">America/Jujuy</option>
+                                    <option value="America/Juneau">America/Juneau</option>
+                                    <option value="America/Kentucky/Louisville">America/Kentucky/Louisville</option>
+                                    <option value="America/Kentucky/Monticello">America/Kentucky/Monticello</option>
+                                    <option value="America/Knox_IN">America/Knox_IN</option>
+                                    <option value="America/Kralendijk">America/Kralendijk</option>
+                                    <option value="America/La_Paz">America/La_Paz</option>
+                                    <option value="America/Lima">America/Lima</option>
+                                    <option value="America/Los_Angeles">America/Los_Angeles</option>
+                                    <option value="America/Louisville">America/Louisville</option>
+                                    <option value="America/Lower_Princes">America/Lower_Princes</option>
+                                    <option value="America/Maceio">America/Maceio</option>
+                                    <option value="America/Managua">America/Managua</option>
+                                    <option value="America/Manaus">America/Manaus</option>
+                                    <option value="America/Marigot">America/Marigot</option>
+                                    <option value="America/Martinique">America/Martinique</option>
+                                    <option value="America/Matamoros">America/Matamoros</option>
+                                    <option value="America/Mazatlan">America/Mazatlan</option>
+                                    <option value="America/Mendoza">America/Mendoza</option>
+                                    <option value="America/Menominee">America/Menominee</option>
+                                    <option value="America/Merida">America/Merida</option>
+                                    <option value="America/Metlakatla">America/Metlakatla</option>
+                                    <option value="America/Mexico_City">America/Mexico_City</option>
+                                    <option value="America/Miquelon">America/Miquelon</option>
+                                    <option value="America/Moncton">America/Moncton</option>
+                                    <option value="America/Monterrey">America/Monterrey</option>
+                                    <option value="America/Montevideo">America/Montevideo</option>
+                                    <option value="America/Montreal">America/Montreal</option>
+                                    <option value="America/Montserrat">America/Montserrat</option>
+                                    <option value="America/Nassau">America/Nassau</option>
+                                    <option value="America/New_York">America/New_York</option>
+                                    <option value="America/Nipigon">America/Nipigon</option>
+                                    <option value="America/Nome">America/Nome</option>
+                                    <option value="America/Noronha">America/Noronha</option>
+                                    <option value="America/North_Dakota/Beulah">America/North_Dakota/Beulah</option>
+                                    <option value="America/North_Dakota/Center">America/North_Dakota/Center</option>
+                                    <option value="America/North_Dakota/New_Salem">America/North_Dakota/New_Salem</option>
+                                    <option value="America/Ojinaga">America/Ojinaga</option>
+                                    <option value="America/Panama">America/Panama</option>
+                                    <option value="America/Pangnirtung">America/Pangnirtung</option>
+                                    <option value="America/Paramaribo">America/Paramaribo</option>
+                                    <option value="America/Phoenix">America/Phoenix</option>
+                                    <option value="America/Port_of_Spain">America/Port_of_Spain</option>
+                                    <option value="America/Port-au-Prince">America/Port-au-Prince</option>
+                                    <option value="America/Porto_Acre">America/Porto_Acre</option>
+                                    <option value="America/Porto_Velho">America/Porto_Velho</option>
+                                    <option value="America/Puerto_Rico">America/Puerto_Rico</option>
+                                    <option value="America/Rainy_River">America/Rainy_River</option>
+                                    <option value="America/Rankin_Inlet">America/Rankin_Inlet</option>
+                                    <option value="America/Recife">America/Recife</option>
+                                    <option value="America/Regina">America/Regina</option>
+                                    <option value="America/Resolute">America/Resolute</option>
+                                    <option value="America/Rio_Branco">America/Rio_Branco</option>
+                                    <option value="America/Rosario">America/Rosario</option>
+                                    <option value="America/Santa_Isabel">America/Santa_Isabel</option>
+                                    <option value="America/Santarem">America/Santarem</option>
+                                    <option value="America/Santiago">America/Santiago</option>
+                                    <option value="America/Santo_Domingo">America/Santo_Domingo</option>
+                                    <option value="America/Sao_Paulo">America/Sao_Paulo</option>
+                                    <option value="America/Scoresbysund">America/Scoresbysund</option>
+                                    <option value="America/Shiprock">America/Shiprock</option>
+                                    <option value="America/Sitka">America/Sitka</option>
+                                    <option value="America/St_Barthelemy">America/St_Barthelemy</option>
+                                    <option value="America/St_Johns">America/St_Johns</option>
+                                    <option value="America/St_Kitts">America/St_Kitts</option>
+                                    <option value="America/St_Lucia">America/St_Lucia</option>
+                                    <option value="America/St_Thomas">America/St_Thomas</option>
+                                    <option value="America/St_Vincent">America/St_Vincent</option>
+                                    <option value="America/Swift_Current">America/Swift_Current</option>
+                                    <option value="America/Tegucigalpa">America/Tegucigalpa</option>
+                                    <option value="America/Thule">America/Thule</option>
+                                    <option value="America/Thunder_Bay">America/Thunder_Bay</option>
+                                    <option value="America/Tijuana">America/Tijuana</option>
+                                    <option value="America/Toronto">America/Toronto</option>
+                                    <option value="America/Tortola">America/Tortola</option>
+                                    <option value="America/Vancouver">America/Vancouver</option>
+                                    <option value="America/Virgin">America/Virgin</option>
+                                    <option value="America/Whitehorse">America/Whitehorse</option>
+                                    <option value="America/Winnipeg">America/Winnipeg</option>
+                                    <option value="America/Yakutat">America/Yakutat</option>
+                                    <option value="America/Yellowknife">America/Yellowknife</option>
+                                    <option value="Antarctica/Casey">Antarctica/Casey</option>
+                                    <option value="Antarctica/Davis">Antarctica/Davis</option>
+                                    <option value="Antarctica/DumontDUrville">Antarctica/DumontDUrville</option>
+                                    <option value="Antarctica/Macquarie">Antarctica/Macquarie</option>
+                                    <option value="Antarctica/Mawson">Antarctica/Mawson</option>
+                                    <option value="Antarctica/McMurdo">Antarctica/McMurdo</option>
+                                    <option value="Antarctica/Palmer">Antarctica/Palmer</option>
+                                    <option value="Antarctica/Rothera">Antarctica/Rothera</option>
+                                    <option value="Antarctica/South_Pole">Antarctica/South_Pole</option>
+                                    <option value="Antarctica/Syowa">Antarctica/Syowa</option>
+                                    <option value="Antarctica/Vostok">Antarctica/Vostok</option>
+                                    <option value="Arctic/Longyearbyen">Arctic/Longyearbyen</option>
+                                    <option value="Asia/Aden">Asia/Aden</option>
+                                    <option value="Asia/Almaty">Asia/Almaty</option>
+                                    <option value="Asia/Amman">Asia/Amman</option>
+                                    <option value="Asia/Anadyr">Asia/Anadyr</option>
+                                    <option value="Asia/Aqtau">Asia/Aqtau</option>
+                                    <option value="Asia/Aqtobe">Asia/Aqtobe</option>
+                                    <option value="Asia/Ashgabat">Asia/Ashgabat</option>
+                                    <option value="Asia/Ashkhabad">Asia/Ashkhabad</option>
+                                    <option value="Asia/Baghdad">Asia/Baghdad</option>
+                                    <option value="Asia/Bahrain">Asia/Bahrain</option>
+                                    <option value="Asia/Baku">Asia/Baku</option>
+                                    <option value="Asia/Bangkok">Asia/Bangkok</option>
+                                    <option value="Asia/Beirut">Asia/Beirut</option>
+                                    <option value="Asia/Bishkek">Asia/Bishkek</option>
+                                    <option value="Asia/Brunei">Asia/Brunei</option>
+                                    <option value="Asia/Calcutta">Asia/Calcutta</option>
+                                    <option value="Asia/Choibalsan">Asia/Choibalsan</option>
+                                    <option value="Asia/Chongqing">Asia/Chongqing</option>
+                                    <option value="Asia/Chungking">Asia/Chungking</option>
+                                    <option value="Asia/Colombo">Asia/Colombo</option>
+                                    <option value="Asia/Dacca">Asia/Dacca</option>
+                                    <option value="Asia/Damascus">Asia/Damascus</option>
+                                    <option value="Asia/Dhaka">Asia/Dhaka</option>
+                                    <option value="Asia/Dili">Asia/Dili</option>
+                                    <option value="Asia/Dubai">Asia/Dubai</option>
+                                    <option value="Asia/Dushanbe">Asia/Dushanbe</option>
+                                    <option value="Asia/Gaza">Asia/Gaza</option>
+                                    <option value="Asia/Harbin">Asia/Harbin</option>
+                                    <option value="Asia/Hebron">Asia/Hebron</option>
+                                    <option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</option>
+                                    <option value="Asia/Hong_Kong">Asia/Hong_Kong</option>
+                                    <option value="Asia/Hovd">Asia/Hovd</option>
+                                    <option value="Asia/Irkutsk">Asia/Irkutsk</option>
+                                    <option value="Asia/Istanbul">Asia/Istanbul</option>
+                                    <option value="Asia/Jakarta">Asia/Jakarta</option>
+                                    <option value="Asia/Jayapura">Asia/Jayapura</option>
+                                    <option value="Asia/Jerusalem">Asia/Jerusalem</option>
+                                    <option value="Asia/Kabul">Asia/Kabul</option>
+                                    <option value="Asia/Kamchatka">Asia/Kamchatka</option>
+                                    <option value="Asia/Karachi">Asia/Karachi</option>
+                                    <option value="Asia/Kashgar">Asia/Kashgar</option>
+                                    <option value="Asia/Kathmandu">Asia/Kathmandu</option>
+                                    <option value="Asia/Katmandu">Asia/Katmandu</option>
+                                    <option value="Asia/Kolkata">Asia/Kolkata</option>
+                                    <option value="Asia/Krasnoyarsk">Asia/Krasnoyarsk</option>
+                                    <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur</option>
+                                    <option value="Asia/Kuching">Asia/Kuching</option>
+                                    <option value="Asia/Kuwait">Asia/Kuwait</option>
+                                    <option value="Asia/Macao">Asia/Macao</option>
+                                    <option value="Asia/Macau">Asia/Macau</option>
+                                    <option value="Asia/Magadan">Asia/Magadan</option>
+                                    <option value="Asia/Makassar">Asia/Makassar</option>
+                                    <option value="Asia/Manila">Asia/Manila</option>
+                                    <option value="Asia/Muscat">Asia/Muscat</option>
+                                    <option value="Asia/Nicosia">Asia/Nicosia</option>
+                                    <option value="Asia/Novokuznetsk">Asia/Novokuznetsk</option>
+                                    <option value="Asia/Novosibirsk">Asia/Novosibirsk</option>
+                                    <option value="Asia/Omsk">Asia/Omsk</option>
+                                    <option value="Asia/Oral">Asia/Oral</option>
+                                    <option value="Asia/Phnom_Penh">Asia/Phnom_Penh</option>
+                                    <option value="Asia/Pontianak">Asia/Pontianak</option>
+                                    <option value="Asia/Pyongyang">Asia/Pyongyang</option>
+                                    <option value="Asia/Qatar">Asia/Qatar</option>
+                                    <option value="Asia/Qyzylorda">Asia/Qyzylorda</option>
+                                    <option value="Asia/Rangoon">Asia/Rangoon</option>
+                                    <option value="Asia/Riyadh">Asia/Riyadh</option>
+                                    <option value="Asia/Saigon">Asia/Saigon</option>
+                                    <option value="Asia/Sakhalin">Asia/Sakhalin</option>
+                                    <option value="Asia/Samarkand">Asia/Samarkand</option>
+                                    <option value="Asia/Seoul">Asia/Seoul</option>
+                                    <option value="Asia/Shanghai">Asia/Shanghai</option>
+                                    <option value="Asia/Singapore">Asia/Singapore</option>
+                                    <option value="Asia/Taipei">Asia/Taipei</option>
+                                    <option value="Asia/Tashkent">Asia/Tashkent</option>
+                                    <option value="Asia/Tbilisi">Asia/Tbilisi</option>
+                                    <option value="Asia/Tehran">Asia/Tehran</option>
+                                    <option value="Asia/Tel_Aviv">Asia/Tel_Aviv</option>
+                                    <option value="Asia/Thimbu">Asia/Thimbu</option>
+                                    <option value="Asia/Thimphu">Asia/Thimphu</option>
+                                    <option value="Asia/Tokyo">Asia/Tokyo</option>
+                                    <option value="Asia/Ujung_Pandang">Asia/Ujung_Pandang</option>
+                                    <option value="Asia/Ulaanbaatar">Asia/Ulaanbaatar</option>
+                                    <option value="Asia/Ulan_Bator">Asia/Ulan_Bator</option>
+                                    <option value="Asia/Urumqi">Asia/Urumqi</option>
+                                    <option value="Asia/Vientiane">Asia/Vientiane</option>
+                                    <option value="Asia/Vladivostok">Asia/Vladivostok</option>
+                                    <option value="Asia/Yakutsk">Asia/Yakutsk</option>
+                                    <option value="Asia/Yekaterinburg">Asia/Yekaterinburg</option>
+                                    <option value="Asia/Yerevan">Asia/Yerevan</option>
+                                    <option value="Atlantic/Azores">Atlantic/Azores</option>
+                                    <option value="Atlantic/Bermuda">Atlantic/Bermuda</option>
+                                    <option value="Atlantic/Canary">Atlantic/Canary</option>
+                                    <option value="Atlantic/Cape_Verde">Atlantic/Cape_Verde</option>
+                                    <option value="Atlantic/Faeroe">Atlantic/Faeroe</option>
+                                    <option value="Atlantic/Faroe">Atlantic/Faroe</option>
+                                    <option value="Atlantic/Jan_Mayen">Atlantic/Jan_Mayen</option>
+                                    <option value="Atlantic/Madeira">Atlantic/Madeira</option>
+                                    <option value="Atlantic/Reykjavik">Atlantic/Reykjavik</option>
+                                    <option value="Atlantic/South_Georgia">Atlantic/South_Georgia</option>
+                                    <option value="Atlantic/St_Helena">Atlantic/St_Helena</option>
+                                    <option value="Atlantic/Stanley">Atlantic/Stanley</option>
+                                    <option value="Australia/ACT">Australia/ACT</option>
+                                    <option value="Australia/Adelaide">Australia/Adelaide</option>
+                                    <option value="Australia/Brisbane">Australia/Brisbane</option>
+                                    <option value="Australia/Broken_Hill">Australia/Broken_Hill</option>
+                                    <option value="Australia/Canberra">Australia/Canberra</option>
+                                    <option value="Australia/Currie">Australia/Currie</option>
+                                    <option value="Australia/Darwin">Australia/Darwin</option>
+                                    <option value="Australia/Eucla">Australia/Eucla</option>
+                                    <option value="Australia/Hobart">Australia/Hobart</option>
+                                    <option value="Australia/LHI">Australia/LHI</option>
+                                    <option value="Australia/Lindeman">Australia/Lindeman</option>
+                                    <option value="Australia/Lord_Howe">Australia/Lord_Howe</option>
+                                    <option value="Australia/Melbourne">Australia/Melbourne</option>
+                                    <option value="Australia/North">Australia/North</option>
+                                    <option value="Australia/NSW">Australia/NSW</option>
+                                    <option value="Australia/Perth">Australia/Perth</option>
+                                    <option value="Australia/Queensland">Australia/Queensland</option>
+                                    <option value="Australia/South">Australia/South</option>
+                                    <option value="Australia/Sydney">Australia/Sydney</option>
+                                    <option value="Australia/Tasmania">Australia/Tasmania</option>
+                                    <option value="Australia/Victoria">Australia/Victoria</option>
+                                    <option value="Australia/West">Australia/West</option>
+                                    <option value="Australia/Yancowinna">Australia/Yancowinna</option>
+                                    <option value="Brazil/Acre">Brazil/Acre</option>
+                                    <option value="Brazil/DeNoronha">Brazil/DeNoronha</option>
+                                    <option value="Brazil/East">Brazil/East</option>
+                                    <option value="Brazil/West">Brazil/West</option>
+                                    <option value="Canada/Atlantic">Canada/Atlantic</option>
+                                    <option value="Canada/Central">Canada/Central</option>
+                                    <option value="Canada/Eastern">Canada/Eastern</option>
+                                    <option value="Canada/East-Saskatchewan">Canada/East-Saskatchewan</option>
+                                    <option value="Canada/Mountain">Canada/Mountain</option>
+                                    <option value="Canada/Newfoundland">Canada/Newfoundland</option>
+                                    <option value="Canada/Pacific">Canada/Pacific</option>
+                                    <option value="Canada/Saskatchewan">Canada/Saskatchewan</option>
+                                    <option value="Canada/Yukon">Canada/Yukon</option>
+                                    <option value="CET">CET</option>
+                                    <option value="Chile/Continental">Chile/Continental</option>
+                                    <option value="Chile/EasterIsland">Chile/EasterIsland</option>
+                                    <option value="CST6CDT">CST6CDT</option>
+                                    <option value="Cuba">Cuba</option>
+                                    <option value="EET">EET</option>
+                                    <option value="Egypt">Egypt</option>
+                                    <option value="Eire">Eire</option>
+                                    <option value="EST">EST</option>
+                                    <option value="EST5EDT">EST5EDT</option>
+                                    <option value="Etc./GMT">Etc./GMT</option>
+                                    <option value="Etc./GMT+0">Etc./GMT+0</option>
+                                    <option value="Etc./UCT">Etc./UCT</option>
+                                    <option value="Etc./Universal">Etc./Universal</option>
+                                    <option value="Etc./UTC">Etc./UTC</option>
+                                    <option value="Etc./Zulu">Etc./Zulu</option>
+                                    <option value="Europe/Amsterdam">Europe/Amsterdam</option>
+                                    <option value="Europe/Andorra">Europe/Andorra</option>
+                                    <option value="Europe/Athens">Europe/Athens</option>
+                                    <option value="Europe/Belfast">Europe/Belfast</option>
+                                    <option value="Europe/Belgrade">Europe/Belgrade</option>
+                                    <option value="Europe/Berlin">Europe/Berlin</option>
+                                    <option value="Europe/Bratislava">Europe/Bratislava</option>
+                                    <option value="Europe/Brussels">Europe/Brussels</option>
+                                    <option value="Europe/Bucharest">Europe/Bucharest</option>
+                                    <option value="Europe/Budapest">Europe/Budapest</option>
+                                    <option value="Europe/Chisinau">Europe/Chisinau</option>
+                                    <option value="Europe/Copenhagen">Europe/Copenhagen</option>
+                                    <option value="Europe/Dublin">Europe/Dublin</option>
+                                    <option value="Europe/Gibraltar">Europe/Gibraltar</option>
+                                    <option value="Europe/Guernsey">Europe/Guernsey</option>
+                                    <option value="Europe/Helsinki">Europe/Helsinki</option>
+                                    <option value="Europe/Isle_of_Man">Europe/Isle_of_Man</option>
+                                    <option value="Europe/Istanbul">Europe/Istanbul</option>
+                                    <option value="Europe/Jersey">Europe/Jersey</option>
+                                    <option value="Europe/Kaliningrad">Europe/Kaliningrad</option>
+                                    <option value="Europe/Kiev">Europe/Kiev</option>
+                                    <option value="Europe/Lisbon">Europe/Lisbon</option>
+                                    <option value="Europe/Ljubljana">Europe/Ljubljana</option>
+                                    <option value="Europe/London">Europe/London</option>
+                                    <option value="Europe/Luxembourg">Europe/Luxembourg</option>
+                                    <option value="Europe/Madrid">Europe/Madrid</option>
+                                    <option value="Europe/Malta">Europe/Malta</option>
+                                    <option value="Europe/Mariehamn">Europe/Mariehamn</option>
+                                    <option value="Europe/Minsk">Europe/Minsk</option>
+                                    <option value="Europe/Monaco">Europe/Monaco</option>
+                                    <option value="Europe/Moscow">Europe/Moscow</option>
+                                    <option value="Europe/Nicosia">Europe/Nicosia</option>
+                                    <option value="Europe/Oslo">Europe/Oslo</option>
+                                    <option value="Europe/Paris">Europe/Paris</option>
+                                    <option value="Europe/Podgorica">Europe/Podgorica</option>
+                                    <option value="Europe/Prague">Europe/Prague</option>
+                                    <option value="Europe/Riga">Europe/Riga</option>
+                                    <option value="Europe/Rome">Europe/Rome</option>
+                                    <option value="Europe/Samara">Europe/Samara</option>
+                                    <option value="Europe/San_Marino">Europe/San_Marino</option>
+                                    <option value="Europe/Sarajevo">Europe/Sarajevo</option>
+                                    <option value="Europe/Simferopol">Europe/Simferopol</option>
+                                    <option value="Europe/Skopje">Europe/Skopje</option>
+                                    <option value="Europe/Sofia">Europe/Sofia</option>
+                                    <option value="Europe/Stockholm">Europe/Stockholm</option>
+                                    <option value="Europe/Tallinn">Europe/Tallinn</option>
+                                    <option value="Europe/Tirane">Europe/Tirane</option>
+                                    <option value="Europe/Tiraspol">Europe/Tiraspol</option>
+                                    <option value="Europe/Uzhgorod">Europe/Uzhgorod</option>
+                                    <option value="Europe/Vaduz">Europe/Vaduz</option>
+                                    <option value="Europe/Vatican">Europe/Vatican</option>
+                                    <option value="Europe/Vienna">Europe/Vienna</option>
+                                    <option value="Europe/Vilnius">Europe/Vilnius</option>
+                                    <option value="Europe/Volgograd">Europe/Volgograd</option>
+                                    <option value="Europe/Warsaw">Europe/Warsaw</option>
+                                    <option value="Europe/Zagreb">Europe/Zagreb</option>
+                                    <option value="Europe/Zaporozhye">Europe/Zaporozhye</option>
+                                    <option value="Europe/Zurich">Europe/Zurich</option>
+                                    <option value="GB">GB</option>
+                                    <option value="GB-Eire">GB-Eire</option>
+                                    <option value="GMT">GMT</option>
+                                    <option value="GMT+0">GMT+0</option>
+                                    <option value="GMT0">GMT0</option>
+                                    <option value="GMT-0">GMT-0</option>
+                                    <option value="Greenwich">Greenwich</option>
+                                    <option value="Hong Kong">Hong Kong</option>
+                                    <option value="HST">HST</option>
+                                    <option value="Iceland">Iceland</option>
+                                    <option value="Indian/Antananarivo">Indian/Antananarivo</option>
+                                    <option value="Indian/Chagos">Indian/Chagos</option>
+                                    <option value="Indian/Christmas">Indian/Christmas</option>
+                                    <option value="Indian/Cocos">Indian/Cocos</option>
+                                    <option value="Indian/Comoro">Indian/Comoro</option>
+                                    <option value="Indian/Kerguelen">Indian/Kerguelen</option>
+                                    <option value="Indian/Mahe">Indian/Mahe</option>
+                                    <option value="Indian/Maldives">Indian/Maldives</option>
+                                    <option value="Indian/Mauritius">Indian/Mauritius</option>
+                                    <option value="Indian/Mayotte">Indian/Mayotte</option>
+                                    <option value="Indian/Reunion">Indian/Reunion</option>
+                                    <option value="Iran">Iran</option>
+                                    <option value="Israel">Israel</option>
+                                    <option value="Jamaica">Jamaica</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="JST-9">JST-9</option>
+                                    <option value="Kwajalein">Kwajalein</option>
+                                    <option value="Libya">Libya</option>
+                                    <option value="MET">MET</option>
+                                    <option value="Mexico/BajaNorte">Mexico/BajaNorte</option>
+                                    <option value="Mexico/BajaSur">Mexico/BajaSur</option>
+                                    <option value="Mexico/General">Mexico/General</option>
+                                    <option value="MST">MST</option>
+                                    <option value="MST7MDT">MST7MDT</option>
+                                    <option value="Navajo">Navajo</option>
+                                    <option value="NZ">NZ</option>
+                                    <option value="NZ-CHAT">NZ-CHAT</option>
+                                    <option value="Pacific/Apia">Pacific/Apia</option>
+                                    <option value="Pacific/Auckland">Pacific/Auckland</option>
+                                    <option value="Pacific/Chatham">Pacific/Chatham</option>
+                                    <option value="Pacific/Chuuk">Pacific/Chuuk</option>
+                                    <option value="Pacific/Easter">Pacific/Easter</option>
+                                    <option value="Pacific/Efate">Pacific/Efate</option>
+                                    <option value="Pacific/Enderbury">Pacific/Enderbury</option>
+                                    <option value="Pacific/Fakaofo">Pacific/Fakaofo</option>
+                                    <option value="Pacific/Fiji">Pacific/Fiji</option>
+                                    <option value="Pacific/Funafuti">Pacific/Funafuti</option>
+                                    <option value="Pacific/Galapagos">Pacific/Galapagos</option>
+                                    <option value="Pacific/Gambier">Pacific/Gambier</option>
+                                    <option value="Pacific/Guadalcanal">Pacific/Guadalcanal</option>
+                                    <option value="Pacific/Guam">Pacific/Guam</option>
+                                    <option value="Pacific/Honolulu">Pacific/Honolulu</option>
+                                    <option value="Pacific/Johnston">Pacific/Johnston</option>
+                                    <option value="Pacific/Kiritimati">Pacific/Kiritimati</option>
+                                    <option value="Pacific/Kosrae">Pacific/Kosrae</option>
+                                    <option value="Pacific/Kwajalein">Pacific/Kwajalein</option>
+                                    <option value="Pacific/Majuro">Pacific/Majuro</option>
+                                    <option value="Pacific/Marquesas">Pacific/Marquesas</option>
+                                    <option value="Pacific/Midway">Pacific/Midway</option>
+                                    <option value="Pacific/Nauru">Pacific/Nauru</option>
+                                    <option value="Pacific/Niue">Pacific/Niue</option>
+                                    <option value="Pacific/Norfolk">Pacific/Norfolk</option>
+                                    <option value="Pacific/Noumea">Pacific/Noumea</option>
+                                    <option value="Pacific/Pago_Pago">Pacific/Pago_Pago</option>
+                                    <option value="Pacific/Palau">Pacific/Palau</option>
+                                    <option value="Pacific/Pitcairn">Pacific/Pitcairn</option>
+                                    <option value="Pacific/Pohnpei">Pacific/Pohnpei</option>
+                                    <option value="Pacific/Ponape">Pacific/Ponape</option>
+                                    <option value="Pacific/Port_Moresby">Pacific/Port_Moresby</option>
+                                    <option value="Pacific/Rarotonga">Pacific/Rarotonga</option>
+                                    <option value="Pacific/Saipan">Pacific/Saipan</option>
+                                    <option value="Pacific/Samoa">Pacific/Samoa</option>
+                                    <option value="Pacific/Tahiti">Pacific/Tahiti</option>
+                                    <option value="Pacific/Tarawa">Pacific/Tarawa</option>
+                                    <option value="Pacific/Tongatapu">Pacific/Tongatapu</option>
+                                    <option value="Pacific/Truk">Pacific/Truk</option>
+                                    <option value="Pacific/Wake">Pacific/Wake</option>
+                                    <option value="Pacific/Wallis">Pacific/Wallis</option>
+                                    <option value="Pacific/Yap">Pacific/Yap</option>
+                                    <option value="Poland">Poland</option>
+                                    <option value="Portugal">Portugal</option>
+                                    <option value="PRC">PRC</option>
+                                    <option value="PST8PDT">PST8PDT</option>
+                                    <option value="ROC">ROC</option>
+                                    <option value="ROK">ROK</option>
+                                    <option value="Singapore">Singapore</option>
+                                    <option value="Turkey">Turkey</option>
+                                    <option value="UCT">UCT</option>
+                                    <option value="Universal">Universal</option>
+                                    <option value="US/Alaska">US/Alaska</option>
+                                    <option value="US/Aleutian">US/Aleutian</option>
+                                    <option value="US/Arizona">US/Arizona</option>
+                                    <option value="US/Central">US/Central</option>
+                                    <option value="US/Eastern">US/Eastern</option>
+                                    <option value="US/East-Indiana">US/East-Indiana</option>
+                                    <option value="US/Hawaii">US/Hawaii</option>
+                                    <option value="US/Indiana-Starke">US/Indiana-Starke</option>
+                                    <option value="US/Michigan">US/Michigan</option>
+                                    <option value="US/Mountain">US/Mountain</option>
+                                    <option value="US/Pacific">US/Pacific</option>
+                                    <option value="US/Pacific-New">US/Pacific-New</option>
+                                    <option value="US/Samoa">US/Samoa</option>
+                                    <option value="UTC">UTC</option>
+                                    <option value="WET">WET</option>
+                                    <option value="W-SU">W-SU</option>
+                                    <option value="Zulu">Zulu</option>
+                                </select></td>
+                          </tr>
+                          <tr id="bus_unit_tr">
+                            <td><b>Businss Unit</b></td>
+                            <td>maxlength 40 chars</td>
+                            <td ng-class="{mandatory: 1}"><input id="bus_unit" placeholder="DHL Global Forwarding" maxlength="40" ng-model="whs.bus_unit"/></td>
+                          </tr>
+                          <tr id="locality_tr">
+                            <td><b>Locality</b></td>
+                            <td>maxlength 20 chars</td>
+                            <td ng-class="{mandatory: 1}"><input id="location" placeholder="Auckland" maxlength="20" ng-model="whs.locality"/></td>
+                          </tr>
+                          <tr id="postcode_tr">
+                            <td><b>Postcode</b></td>
+                            <td>maxlength 15 chars</td>
+                            <td ng-class="{mandatory: 1}"><input id="postcode" placeholder="100 00" maxlength="15" ng-model="whs.postcode"/></td>
+                          </tr>
+                          <tr id="add_1_tr">
+                            <td><b>Adressline 1</b></td>
+                            <td>maxlength 40 chars</td>
+                            <td ng-class="{mandatory: 1}"><input id="add_1" placeholder="Westney Industry Park" maxlength="40" ng-model="whs.add_1"/></td>
+                          </tr>
+                          <tr id="add_2_tr">
+                            <td><b>Adressline 2</b></td>
+                            <td>maxlength 40 chars</td>
+                            <td><input id="add_2" placeholder="" maxlength="40" ng-model="whs.add_2"/></td>
+                          </tr>
+                          <tr id="add_3_tr">
+                            <td><b>Adressline 3</b></td>
+                            <td>maxlength 40 chars</td>
+                            <td><input id="add_3" placeholder="" maxlength="40" ng-model="whs.add_3"/></td>
+                          </tr>
+                          <tr id="phone_num_tr">
+                            <td><b>Phone number (international format)</b></td>
+                            <td>maxlength 20 chars</td>
+                            <td ng-class="{mandatory: 1}"><input id="phone_num" placeholder="+64 9 977 4701" maxlength="20" ng-model="whs.phone_num"/></td>
+                          </tr>
+                          <tr id="fax_num_tr">
+                            <td><b>Fax number (international format)</b></td>
+                            <td>maxlength 20 chars</td>
+                            <td><input id="fax_num" placeholder="" maxlength="20" ng-model="whs.fax_num"/></td>
+                          </tr>
+                          <tr id="truckdock_tr">
+                            <td><b>Truck-Dock managent in use</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.truckdock">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>
+                          </tr>
+                          <tr id="sec_sys_tr">
+                            <td><b>Security system equipped</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.sec_sys">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>
+                          </tr>
+                          <tr id="iata_tr">
+                            <td><b>IATA location</b></td>
+                            <td>valid NFE IATA code</td>
+                            <td ng-class="{mandatory: 1}"><input id="iata" placeholder="NZAKL" ng-model="whs.iata" capitalize /></td>
+                          </tr>
+                          <tr id="loc_lang_tr">
+                            <td><b>Warehouse local language</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="loc_lang" placeholder="en" style="width: 180px" ng-model="whs.loc_lang">
+                                <option value="-">-- choose --</option>
+                                <option value="af">Afrikaans</option>
+                                <option value="af-ZA">Afrikaans (South Africa)</option>
+                                <option value="ar">Arabic</option>
+                                <option value="ar-AE">Arabic (U.A.E.)</option>
+                                <option value="ar-BH">Arabic (Bahrain)</option>
+                                <option value="ar-DZ">Arabic (Algeria)</option>
+                                <option value="ar-EG">Arabic (Egypt)</option>
+                                <option value="ar-IQ">Arabic (Iraq)</option>
+                                <option value="ar-JO">Arabic (Jordan)</option>
+                                <option value="ar-KW">Arabic (Kuwait)</option>
+                                <option value="ar-LB">Arabic (Lebanon)</option>
+                                <option value="ar-LY">Arabic (Libya)</option>
+                                <option value="ar-MA">Arabic (Morocco)</option>
+                                <option value="ar-OM">Arabic (Oman)</option>
+                                <option value="ar-QA">Arabic (Qatar)</option>
+                                <option value="ar-SA">Arabic (Saudi Arabia)</option>
+                                <option value="ar-SY">Arabic (Syria)</option>
+                                <option value="ar-TN">Arabic (Tunisia)</option>
+                                <option value="ar-YE">Arabic (Yemen)</option>
+                                <option value="az">Azeri (Latin)</option>
+                                <option value="az-AZ">Azeri (Latin) (Azerbaijan)</option>
+                                <option value="az-AZ">Azeri (Cyrillic) (Azerbaijan)</option>
+                                <option value="be">Belarusian</option>
+                                <option value="be-BY">Belarusian (Belarus)</option>
+                                <option value="bg">Bulgarian</option>
+                                <option value="bg-BG">Bulgarian (Bulgaria)</option>
+                                <option value="bs-BA">Bosnian (Bosnia and Herzegovina)</option>
+                                <option value="ca">Catalan</option>
+                                <option value="ca-ES">Catalan (Spain)</option>
+                                <option value="cs">Czech</option>
+                                <option value="cs-CZ">Czech (Czech Republic)</option>
+                                <option value="cy">Welsh</option>
+                                <option value="cy-GB">Welsh (United Kingdom)</option>
+                                <option value="da">Danish</option>
+                                <option value="da-DK">Danish (Denmark)</option>
+                                <option value="de">German</option>
+                                <option value="de-AT">German (Austria)</option>
+                                <option value="de-CH">German (Switzerland)</option>
+                                <option value="de-DE">German (Germany)</option>
+                                <option value="de-LI">German (Liechtenstein)</option>
+                                <option value="de-LU">German (Luxembourg)</option>
+                                <option value="dv">Divehi</option>
+                                <option value="dv-MV">Divehi (Maldives)</option>
+                                <option value="el">Greek</option>
+                                <option value="el-GR">Greek (Greece)</option>
+                                <option value="en">English</option>
+                                <option value="en-AU">English (Australia)</option>
+                                <option value="en-BZ">English (Belize)</option>
+                                <option value="en-CA">English (Canada)</option>
+                                <option value="en-CB">English (Caribbean)</option>
+                                <option value="en-GB">English (United Kingdom)</option>
+                                <option value="en-IE">English (Ireland)</option>
+                                <option value="en-JM">English (Jamaica)</option>
+                                <option value="en-NZ">English (New Zealand)</option>
+                                <option value="en-PH">English (Republic of the Philippines)</option>
+                                <option value="en-TT">English (Trinidad and Tobago)</option>
+                                <option value="en-US">English (United States)</option>
+                                <option value="en-ZA">English (South Africa)</option>
+                                <option value="en-ZW">English (Zimbabwe)</option>
+                                <option value="eo">Esperanto</option>
+                                <option value="es">Spanish</option>
+                                <option value="es-AR">Spanish (Argentina)</option>
+                                <option value="es-BO">Spanish (Bolivia)</option>
+                                <option value="es-CL">Spanish (Chile)</option>
+                                <option value="es-CO">Spanish (Colombia)</option>
+                                <option value="es-CR">Spanish (Costa Rica)</option>
+                                <option value="es-DO">Spanish (Dominican Republic)</option>
+                                <option value="es-EC">Spanish (Ecuador)</option>
+                                <option value="es-ES">Spanish (Castilian)</option>
+                                <option value="es-ES">Spanish (Spain)</option>
+                                <option value="es-GT">Spanish (Guatemala)</option>
+                                <option value="es-HN">Spanish (Honduras)</option>
+                                <option value="es-MX">Spanish (Mexico)</option>
+                                <option value="es-NI">Spanish (Nicaragua)</option>
+                                <option value="es-PA">Spanish (Panama)</option>
+                                <option value="es-PE">Spanish (Peru)</option>
+                                <option value="es-PR">Spanish (Puerto Rico)</option>
+                                <option value="es-PY">Spanish (Paraguay)</option>
+                                <option value="es-SV">Spanish (El Salvador)</option>
+                                <option value="es-UY">Spanish (Uruguay)</option>
+                                <option value="es-VE">Spanish (Venezuela)</option>
+                                <option value="et">Estonian</option>
+                                <option value="et-EE">Estonian (Estonia)</option>
+                                <option value="eu">Basque</option>
+                                <option value="eu-ES">Basque (Spain)</option>
+                                <option value="fa">Farsi</option>
+                                <option value="fa-IR">Farsi (Iran)</option>
+                                <option value="fi">Finnish</option>
+                                <option value="fi-FI">Finnish (Finland)</option>
+                                <option value="fo">Faroese</option>
+                                <option value="fo-FO">Faroese (Faroe Islands)</option>
+                                <option value="fr">French</option>
+                                <option value="fr-BE">French (Belgium)</option>
+                                <option value="fr-CA">French (Canada)</option>
+                                <option value="fr-CH">French (Switzerland)</option>
+                                <option value="fr-FR">French (France)</option>
+                                <option value="fr-LU">French (Luxembourg)</option>
+                                <option value="fr-MC">French (Principality of Monaco)</option>
+                                <option value="gl">Galician</option>
+                                <option value="gl-ES">Galician (Spain)</option>
+                                <option value="gu">Gujarati</option>
+                                <option value="gu-IN">Gujarati (India)</option>
+                                <option value="he">Hebrew</option>
+                                <option value="he-IL">Hebrew (Israel)</option>
+                                <option value="hi">Hindi</option>
+                                <option value="hi-IN">Hindi (India)</option>
+                                <option value="hr">Croatian</option>
+                                <option value="hr-BA">Croatian (Bosnia and Herzegovina)</option>
+                                <option value="hr-HR">Croatian (Croatia)</option>
+                                <option value="hu">Hungarian</option>
+                                <option value="hu-HU">Hungarian (Hungary)</option>
+                                <option value="hy">Armenian</option>
+                                <option value="hy-AM">Armenian (Armenia)</option>
+                                <option value="id">Indonesian</option>
+                                <option value="id-ID">Indonesian (Indonesia)</option>
+                                <option value="is">Icelandic</option>
+                                <option value="is-IS">Icelandic (Iceland)</option>
+                                <option value="it">Italian</option>
+                                <option value="it-CH">Italian (Switzerland)</option>
+                                <option value="it-IT">Italian (Italy)</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ja-JP">Japanese (Japan)</option>
+                                <option value="ka">Georgian</option>
+                                <option value="ka-GE">Georgian (Georgia)</option>
+                                <option value="kk">Kazakh</option>
+                                <option value="kk-KZ">Kazakh (Kazakhstan)</option>
+                                <option value="kn">Kannada</option>
+                                <option value="kn-IN">Kannada (India)</option>
+                                <option value="ko">Korean</option>
+                                <option value="ko-KR">Korean (Korea)</option>
+                                <option value="kok">Konkani</option>
+                                <option value="kok-IN">Konkani (India)</option>
+                                <option value="ky">Kyrgyz</option>
+                                <option value="ky-KG">Kyrgyz (Kyrgyzstan)</option>
+                                <option value="lt">Lithuanian</option>
+                                <option value="lt-LT">Lithuanian (Lithuania)</option>
+                                <option value="lv">Latvian</option>
+                                <option value="lv-LV">Latvian (Latvia)</option>
+                                <option value="mi">Maori</option>
+                                <option value="mi-NZ">Maori (New Zealand)</option>
+                                <option value="mk">FYRO Macedonian</option>
+                                <option value="mk-MK">FYRO Macedonian (Former Yugoslav Republic of Macedonia)</option>
+                                <option value="mn">Mongolian</option>
+                                <option value="mn-MN">Mongolian (Mongolia)</option>
+                                <option value="mr">Marathi</option>
+                                <option value="mr-IN">Marathi (India)</option>
+                                <option value="ms">Malay</option>
+                                <option value="ms-BN">Malay (Brunei Darussalam)</option>
+                                <option value="ms-MY">Malay (Malaysia)</option>
+                                <option value="mt">Maltese</option>
+                                <option value="mt-MT">Maltese (Malta)</option>
+                                <option value="nb">Norwegian (Bokm?l)</option>
+                                <option value="nb-NO">Norwegian (Bokm?l) (Norway)</option>
+                                <option value="nl">Dutch</option>
+                                <option value="nl-BE">Dutch (Belgium)</option>
+                                <option value="nl-NL">Dutch (Netherlands)</option>
+                                <option value="nn-NO">Norwegian (Nynorsk) (Norway)</option>
+                                <option value="ns">Northern Sotho</option>
+                                <option value="ns-ZA">Northern Sotho (South Africa)</option>
+                                <option value="pa">Punjabi</option>
+                                <option value="pa-IN">Punjabi (India)</option>
+                                <option value="pl">Polish</option>
+                                <option value="pl-PL">Polish (Poland)</option>
+                                <option value="ps">Pashto</option>
+                                <option value="ps-AR">Pashto (Afghanistan)</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="pt-BR">Portuguese (Brazil)</option>
+                                <option value="pt-PT">Portuguese (Portugal)</option>
+                                <option value="qu">Quechua</option>
+                                <option value="qu-BO">Quechua (Bolivia)</option>
+                                <option value="qu-EC">Quechua (Ecuador)</option>
+                                <option value="qu-PE">Quechua (Peru)</option>
+                                <option value="ro">Romanian</option>
+                                <option value="ro-RO">Romanian (Romania)</option>
+                                <option value="ru">Russian</option>
+                                <option value="ru-RU">Russian (Russia)</option>
+                                <option value="sa">Sanskrit</option>
+                                <option value="sa-IN">Sanskrit (India)</option>
+                                <option value="se">Sami (Northern)</option>
+                                <option value="se-FI">Sami (Northern) (Finland)</option>
+                                <option value="se-FI">Sami (Skolt) (Finland)</option>
+                                <option value="se-FI">Sami (Inari) (Finland)</option>
+                                <option value="se-NO">Sami (Northern) (Norway)</option>
+                                <option value="se-NO">Sami (Lule) (Norway)</option>
+                                <option value="se-NO">Sami (Southern) (Norway)</option>
+                                <option value="se-SE">Sami (Northern) (Sweden)</option>
+                                <option value="se-SE">Sami (Lule) (Sweden)</option>
+                                <option value="se-SE">Sami (Southern) (Sweden)</option>
+                                <option value="sk">Slovak</option>
+                                <option value="sk-SK">Slovak (Slovakia)</option>
+                                <option value="sl">Slovenian</option>
+                                <option value="sl-SI">Slovenian (Slovenia)</option>
+                                <option value="sq">Albanian</option>
+                                <option value="sq-AL">Albanian (Albania)</option>
+                                <option value="sr-BA">Serbian (Latin) (Bosnia and Herzegovina)</option>
+                                <option value="sr-BA">Serbian (Cyrillic) (Bosnia and Herzegovina)</option>
+                                <option value="sr-SP">Serbian (Latin) (Serbia and Montenegro)</option>
+                                <option value="sr-SP">Serbian (Cyrillic) (Serbia and Montenegro)</option>
+                                <option value="sv">Swedish</option>
+                                <option value="sv-FI">Swedish (Finland)</option>
+                                <option value="sv-SE">Swedish (Sweden)</option>
+                                <option value="sw">Swahili</option>
+                                <option value="sw-KE">Swahili (Kenya)</option>
+                                <option value="syr">Syriac</option>
+                                <option value="syr-SY">Syriac (Syria)</option>
+                                <option value="ta">Tamil</option>
+                                <option value="ta-IN">Tamil (India)</option>
+                                <option value="te">Telugu</option>
+                                <option value="te-IN">Telugu (India)</option>
+                                <option value="th">Thai</option>
+                                <option value="th-TH">Thai (Thailand)</option>
+                                <option value="tl">Tagalog</option>
+                                <option value="tl-PH">Tagalog (Philippines)</option>
+                                <option value="tn">Tswana</option>
+                                <option value="tn-ZA">Tswana (South Africa)</option>
+                                <option value="tr">Turkish</option>
+                                <option value="tr-TR">Turkish (Turkey)</option>
+                                <option value="tt">Tatar</option>
+                                <option value="tt-RU">Tatar (Russia)</option>
+                                <option value="ts">Tsonga</option>
+                                <option value="uk">Ukrainian</option>
+                                <option value="uk-UA">Ukrainian (Ukraine)</option>
+                                <option value="ur">Urdu</option>
+                                <option value="ur-PK">Urdu (Islamic Republic of Pakistan)</option>
+                                <option value="uz">Uzbek (Latin)</option>
+                                <option value="uz-UZ">Uzbek (Latin) (Uzbekistan)</option>
+                                <option value="uz-UZ">Uzbek (Cyrillic) (Uzbekistan)</option>
+                                <option value="vi">Vietnamese</option>
+                                <option value="vi-VN">Vietnamese (Viet Nam)</option>
+                                <option value="xh">Xhosa</option>
+                                <option value="xh-ZA">Xhosa (South Africa)</option>
+                                <option value="zh">Chinese</option>
+                                <option value="zh-CN">Chinese (S)</option>
+                                <option value="zh-HK">Chinese (Hong Kong)</option>
+                                <option value="zh-MO">Chinese (Macau)</option>
+                                <option value="zh-SG">Chinese (Singapore)</option>
+                                <option value="zh-TW">Chinese (T)</option>
+                                <option value="zu">Zulu</option>
+                                <option value="zu-ZA">Zulu (South Africa)</option>                          
+                            </select></td>
+                          </tr>
+                          <tr id="boxid_tr">
+                            <td><b>Activate boxid validation?</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.boxid">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>                            
+                          </tr>
+                          <tr id="outbound_tr">
+                            <td><b>Automatic outbound loading upon deconsolidation?</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.outbound">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>                            
+                          </tr>
+                          <tr id="autoreceive_tr">
+                            <td><b>Container autoreceive triggered by container unload?</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.autoreceive">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>  
+                          </tr>
+                          <tr id="def_loc_tr">
+                            <td><b>Default location of outbound trucks</b></td>
+                            <td>one of warehouse location</td>
+                            <td ng-class="{predefined: 1}"><select id="def_loc" ng-model="whs.def_loc" ng-options="value.loc_code as value.loc_code for value in whs_loc_array">
+                                <option value="">-- no default location --</option></select></td>
+                          </tr>
+                          <tr id="hb_label_tr">
+                            <td><b>Consignee on HB label</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.hb_label">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>  
+                          </tr>
+                          <tr id="cus_clear_tr">
+                            <td><b>Default Custom Clearance</b></td>
+                            <td></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="whs.cus_clear">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>  
+
+                          </tr>                               
+                        </table>
+                    </form>
+                </div>
+                <div ng-show="panel.isSelected(2)">
+                    <h4>WHS Location Management</h4>
+                    <table id="lTable" border="1">
+                        <col width="0" style="vertical-align:top;">
+                        <col width="130" style="vertical-align:top;">
+                        <col width="130" style="vertical-align:top;" ng-class="{mandatory: 1}">
+                        <col width="130" style="vertical-align:top;">
+                        <col width="130" style="vertical-align:top;" ng-class="{mandatory: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{mandatory: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{predefined: whs.truckdock}">
+                        <col width="130" style="vertical-align:top;">
+                        <tr>
+                            <td>#</td>
+                            <td>Warehouse Code</td>
+                            <td>Location Code</td>
+                            <td>Duplicity</td>
+                            <td>Location Description</td>
+                            <td>Location bar-code available for scanning</td>
+                            <td>Location group (max. 40characters)</td>
+                            <td>TDK Area Code</td>
+                            <td>Actions</td>
+                        </tr>
+                        <tr ng-repeat="location in whs_loc_array">
+                            <td>{{$index}}</td>
+                            <td>{{whs.whs_code}}</td>
+                            <td><input type="text" ng-model="location.loc_code" capitalize ng-change="check(whs_loc_array)" /></td>
+                            <td><span id="dupl{{$index}}" ng-bind="loc_dupl[$index]">{{loc_dupl[$index]}}</span></td>
+                            <td><input type="text" ng-model="location.loc_desc" /></td>
+                            <td ng-class="{predefined: 1}"><select id="volume_unit" ng-model="location.scan_avail">
+                                  <option value="-">-- choose --</option>
+                                  <option value="0">No</option>
+                                  <option value="1">Yes</option>
+                                </select></td>  
+                            <td><input type="text" ng-model="location.loc_group" maxlength="40" /></td>
+                            <td><select id="def_loc" ng-model="location.tdkareacode" ng-options="r.tdkareacode as r.tdkareacode for r in tdks | unique:'tdkareacode'">
+                                <option value="">-- no tdk area code --</option>
+                                </select></td>
+                            <td><button ng-click="new_loc($index)">N</button>
+                                <button ng-click="cop_loc($index)">C</button>
+                                <button ng-click="rem_loc($index)">X</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div ng-show="panel.isSelected(3)">
+                    <h4>Label Printers</h4>
+                    <table id="pTable" border="1">
+                        <col width="0" style="vertical-align:top;">
+                        <col width="130" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{mandatory: 1}">
+                        <col width="" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{predefined: 1}">
+                        <col width="130" style="vertical-align:top;" ng-class="{mandatory: 1}">
+                        <col width="130" style="vertical-align:top;">
+                        <tr>
+                            <td>#</td>
+                            <td>Label printer make (QTYPE)</td>
+                            <td>Label printer IP</td>
+                            <td>ONHAND</td>
+                            <td>Masterbill</td>
+                            <td>Housebill</td>
+                            <td>Delivery</td>
+                            <td>Format</td>
+                            <td>Printer Description (maximum 40 characters)</td>
+                            <td>Actions</td>
+                        </tr>
+                        <tr ng-repeat="printer in label_printers">                  
+                            <td>{{$index}}</td>
+                            <td><select ng-model="printer.qtype">
+                                <option value="-">-- choose --</option>
+                                <option value="ZPL">Zebra</option>
+                                <option value="TEC">Toshiba</option>
+                                </select></td>
+                                    <td><form name="myForm" novalidate ng-submit="">
+                                    <input type="text" name="ip" ng-model="printer.ip" required ng-pattern="/^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$/" />
+                                    <input type="submit" ng-disabled="myForm.ip.$pristine || myForm.ip.$dirty && myForm.ip.$invalid" style="width:0;height:0;visibility:hidden;">
+                                    <div class="custom-error" ng-show="myForm.ip.$dirty && myForm.ip.$invalid">
+                                        Invalid: <span ng-show="myForm.ip.$error.required">IP is required</span>
+                                        <span ng-show="myForm.ip.$error.pattern">Invalid IP format</span>
+                                    </div>
+                                    </form></td>
+                            <td><input type="checkbox" ng-model="printer.onhand" /></td>
+                            <td><input type="checkbox" ng-model="printer.masterbill" /></td>
+                            <td><input type="checkbox" ng-model="printer.housebill" /></td>
+                            <td><input type="checkbox" ng-model="printer.delivery" /></td>
+                            <td><select ng-model="printer.format">
+                                <option value="-">-- choose --</option>
+                                <option value="4x6">4x6</option>
+                                <option value="4x5">4x5</option>
+                                </select></td>
+                            <td><input type="text" ng-model="printer.description" /></td>
+                            <td><button ng-click="new_prn($index)">N</button>
+                                <button ng-click="cop_prn($index)">C</button>
+                                <button ng-click="rem_prn($index)">X</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div ng-show="panel.isSelected(4)">
+                    <h4>Users</h4>
+                    <table id="uTable" border="1">
+                        <col style="vertical-align:top; width: 0px; ">
+                        <col style="vertical-align:top; width: 100px;" ng-class="{mandatory: 1}">
+                        <col style="vertical-align:top; width: 80px; ">
+                        <col style="vertical-align:top; width: 100px;" ng-class="{mandatory: 1}">
+                        <col style="vertical-align:top; width: 100px;" ng-class="{mandatory: 1}">
+                        <col style="vertical-align:top; width: 80px;">
+                        <col style="vertical-align:top; width: 130px;">
+                        <col style="vertical-align:top; width: 130px;" ng-class="{predefined: 1}">
+                        <col style="vertical-align:top; width: 130px;" ng-class="{predefined: 1}">
+                        <col style="vertical-align:top; width: 130px;" ng-class="{mandatory: 1}">
+                        <col style="vertical-align:top; width: 130px;">
+                        <tr>
+                            <td>#</td>
+                            <td>First Name</td>
+                            <td>Middle Initial</td>
+                            <td>Last Name</td>
+                            <td>LDAP id</td>
+                            <td>DGF Warehouse</td>
+                            <td>Role / Function</td>
+                            <td>FSI User Category</td>
+                            <td>Preferred Language</td>
+                            <td>Email Address</td>
+                            <td>Actions</td>
+                        </tr>
+                        <tr ng-repeat="user in users">
+                            <td>{{$index}}</td>
+                            <td><input type="text" ng-model="user.fname" style="width: 100px;"/></td>
+                            <td><input type="text" ng-model="user.mname" style="width: 80px;"/></td>
+                            <td><input type="text" ng-model="user.lname" style="width: 100px;"/></td>
+                            <td><input type="text" ng-model="user.ldap"  style="width: 100px;"/></td>
+                            <td>{{whs.whs_code}}</td>
+                            <td><input type="text" ng-model="user.role" /></td>
+                            <td><select ng-model="user.category">
+                                <option value="-">-- choose --</option>
+                                <option value="PUSER">PUSER</option>
+                                <option value="CUSER">CUSER</option>
+                                </select></td>
+                            <td><select id="loc_lang" placeholder="en" style="width: 180px" ng-model="user.lang">
+                                    <option value="-">-- choose --</option>
+                                    <option value="af">Afrikaans</option>
+                                    <option value="ar">Arabic</option>
+                                    <option value="az">Azeri (Latin)</option>
+                                    <option value="be">Belarusian</option>
+                                    <option value="bg">Bulgarian</option>
+                                    <option value="ca">Catalan</option>
+                                    <option value="cs">Czech</option>
+                                    <option value="cy">Welsh</option>
+                                    <option value="da">Danish</option>
+                                    <option value="de">German</option>
+                                    <option value="dv">Divehi</option>
+                                    <option value="dv-MV">Divehi (Maldives)</option>
+                                    <option value="el">Greek</option>
+                                    <option value="en">English</option>
+                                    <option value="eo">Esperanto</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="et">Estonian</option>
+                                    <option value="eu">Basque</option>
+                                    <option value="fa">Farsi</option>
+                                    <option value="fi">Finnish</option>
+                                    <option value="fo">Faroese</option>
+                                    <option value="fr">French</option>
+                                    <option value="gl">Galician</option>
+                                    <option value="gu">Gujarati</option>
+                                    <option value="he">Hebrew</option>
+                                    <option value="hi">Hindi</option>
+                                    <option value="hr">Croatian</option>
+                                    <option value="hu">Hungarian</option>
+                                    <option value="hy">Armenian</option>
+                                    <option value="id">Indonesian</option>
+                                    <option value="is">Icelandic</option>
+                                    <option value="it">Italian</option>
+                                    <option value="ja">Japanese</option>
+                                    <option value="ka">Georgian</option>
+                                    <option value="kk">Kazakh</option>
+                                    <option value="kn">Kannada</option>
+                                    <option value="ko">Korean</option>
+                                    <option value="kok">Konkani</option>
+                                    <option value="ky">Kyrgyz</option>
+                                    <option value="lt">Lithuanian</option>
+                                    <option value="lv">Latvian</option>
+                                    <option value="mi">Maori</option>
+                                    <option value="mk">FYRO Macedonian</option>
+                                    <option value="mn">Mongolian</option>
+                                    <option value="mr">Marathi</option>
+                                    <option value="ms">Malay</option>
+                                    <option value="mt">Maltese</option>
+                                    <option value="nb">Norwegian (Bokm?l)</option>
+                                    <option value="nl">Dutch</option>
+                                    <option value="ns">Northern Sotho</option>
+                                    <option value="pa">Punjabi</option>
+                                    <option value="pl">Polish</option>
+                                    <option value="ps">Pashto</option>
+                                    <option value="pt">Portuguese</option>
+                                    <option value="qu">Quechua</option>
+                                    <option value="ro">Romanian</option>
+                                    <option value="ru">Russian</option>
+                                    <option value="sa">Sanskrit</option>
+                                    <option value="se">Sami (Northern)</option>
+                                    <option value="sk">Slovak</option>
+                                    <option value="sl">Slovenian</option>
+                                    <option value="sq">Albanian</option>
+                                    <option value="sv">Swedish</option>
+                                    <option value="sw">Swahili</option>
+                                    <option value="syr">Syriac</option>
+                                    <option value="ta">Tamil</option>
+                                    <option value="te">Telugu</option>
+                                    <option value="th">Thai</option>
+                                    <option value="tl">Tagalog</option>
+                                    <option value="tn">Tswana</option>
+                                    <option value="tr">Turkish</option>
+                                    <option value="tt">Tatar</option>
+                                    <option value="ts">Tsonga</option>
+                                    <option value="uk">Ukrainian</option>
+                                    <option value="ur">Urdu</option>
+                                    <option value="uz">Uzbek (Latin)</option>
+                                    <option value="vi">Vietnamese</option>
+                                    <option value="xh">Xhosa</option>
+                                    <option value="zh">Chinese</option>
+                                    <option value="zu">Zulu</option>
+                                </select></td>
+                            <td><input type="text" ng-model="user.email" /></td>
+                            <td><button ng-click="new_usr($index)">N</button>
+                                <button ng-click="cop_usr($index)">C</button>
+                                <button ng-click="rem_usr($index)">X</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div ng-show="panel.isSelected(5)">
+                    <h4>TDK</h4>
+                    <table id="tTable" border="1">
+                        <col style="vertical-align:top; ">
+                        <col style="vertical-align:top;" ng-class="{mandatory: whs.truckdock}">
+                        <col style="vertical-align:top;" ng-class="{mandatory: whs.truckdock}">
+                        <col style="vertical-align:top; ">
+                        <tr>
+                            <td>#</td>
+                            <td>Door Code</td>
+                            <td>TDK Area Code</td> 
+                            <td>Actions</td> 
+                        </tr>
+                        <tr ng-repeat="tdk in tdks">
+                            <td>{{$index}}</td>
+                            <td><input type="text" ng-model="tdk.doorcode" /></td>
+                            <td><input type="text" ng-model="tdk.tdkareacode" /></td>
+                            <td><button ng-click="new_tdk($index)">N</button>
+                                <button ng-click="cop_tdk($index)">C</button>
+                                <button ng-click="rem_tdk($index)">X</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </body>
+</html>
